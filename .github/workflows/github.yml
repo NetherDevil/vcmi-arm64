@@ -46,27 +46,6 @@ jobs:
     - name: Install vcpkg Dependencies
       run: source '${{github.workspace}}/CI/install_vcpkg_dependencies.sh' '${{matrix.platform}}'
 
-    - name: ccache for PRs
-      uses: hendrikmuhs/ccache-action@v1.2
-      if: ${{ github.event.number != '' }}
-      with:
-        key: ${{ matrix.preset }}-PR-${{ github.event.number }}
-        restore-keys: |
-          ${{ matrix.preset }}-PR-${{ github.event.number }}
-          ${{ matrix.preset }}-no-PR
-        max-size: "5G"
-        verbose: 2
-
-    - name: ccache for everything but PRs
-      uses: hendrikmuhs/ccache-action@v1.2
-      if: ${{ (github.repository == 'vcmi/vcmi' && github.event.number == '' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/master')) ||  github.repository != 'vcmi/vcmi' }}
-      with:
-        key: ${{ matrix.preset }}-no-PR
-        restore-keys: |
-          ${{ matrix.preset }}-no-PR
-        max-size: "5G"
-        verbose: 2
-
     - name: Build Number
       run: |
         source '${{github.workspace}}/CI/get_package_name.sh'
