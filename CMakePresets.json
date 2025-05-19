@@ -435,6 +435,11 @@
             "inherits": "default-release"
         },
         {
+            "name": "windows-msvc-release-arm64",
+            "configurePreset": "windows-msvc-release-arm64",
+            "inherits": "default-release"
+        },
+        {
             "name": "windows-msvc-release-ccache",
             "configurePreset": "windows-msvc-release-ccache",
             "inherits": "windows-msvc-release"
