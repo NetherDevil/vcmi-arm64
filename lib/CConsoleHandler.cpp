@@ -13,13 +13,13 @@
 
 #include "CThreadHelper.h"
 
-#include <boost/stacktrace.hpp>
+//#include <boost/stacktrace.hpp>
 
 #if defined(NDEBUG) && !defined(VCMI_ANDROID)
 #define USE_ON_TERMINATE
 #endif
 
-#if defined(NDEBUG) && defined(VCMI_WINDOWS)
+#if defined(NDEBUG) && defined(VCMI_WINDOWS) && !defined(_M_ARM64)
 #define USE_UNHANDLED_EXCEPTION_FILTER
 #define CREATE_MEMORY_DUMP
 #endif
@@ -176,7 +176,7 @@ LONG WINAPI onUnhandledException(EXCEPTION_POINTERS* exception)
 	{
 		logGlobal->error("Reason: unknown exception!");
 	}
-
+#ifndef _M_ARM64
 	logGlobal->error("Call stack information:");
 	std::stringstream stream;
 	stream << boost::stacktrace::stacktrace();
@@ -187,6 +187,8 @@ LONG WINAPI onUnhandledException(EXCEPTION_POINTERS* exception)
 	logGlobal->error("Thread ID: %d", threadId);
 
 	createMemoryDump(nullptr);
+#endif
+	
 #endif
 	std::abort();
 }
