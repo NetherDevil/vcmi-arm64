@@ -128,6 +128,7 @@ LONG WINAPI onUnhandledException(EXCEPTION_POINTERS* exception)
 	logGlobal->error("Disaster happened.");
 
 	PEXCEPTION_RECORD einfo = exception->ExceptionRecord;
+#ifndef _M_ARM64
 	logGlobal->error("Reason: 0x%x - %s at %04x:%x", einfo->ExceptionCode, exceptionName(einfo->ExceptionCode), exception->ContextRecord->SegCs, (void*)einfo->ExceptionAddress);
 
 	if (einfo->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
@@ -144,6 +145,9 @@ LONG WINAPI onUnhandledException(EXCEPTION_POINTERS* exception)
 	createMemoryDump(&meinfo);
 #endif
 
+#else
+	logGlobal->error("Reason: 0x%x - %s", einfo->ExceptionCode, exceptionName(einfo->ExceptionCode));
+#endif
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 #endif
