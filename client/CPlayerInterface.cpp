@@ -46,6 +46,7 @@
 #include "render/CAnimation.h"
 #include "render/IImage.h"
 #include "render/IRenderHandler.h"
+#include "render/IScreenHandler.h"
 
 #include "widgets/Buttons.h"
 #include "widgets/CComponent.h"
@@ -943,6 +944,7 @@ void CPlayerInterface::battleAttack(const BattleID & battleID, const BattleAttac
 	info.unlucky = ba->unlucky();
 	info.deathBlow = ba->deathBlow();
 	info.lifeDrain = ba->lifeDrain();
+	info.playCustomAnimation = ba->playCustomAnimation();
 	info.tile = ba->tile;
 	info.spellEffect = SpellID::NONE;
 
@@ -1825,6 +1827,11 @@ void CPlayerInterface::showWorldViewEx(const std::vector<ObjectPosInfo>& objectP
 	adventureInt->openWorldView(objectPositions, showTerrain );
 }
 
+void CPlayerInterface::setColorScheme(ColorScheme scheme)
+{
+	ENGINE->screenHandler().setColorScheme(scheme);
+}
+
 std::optional<BattleAction> CPlayerInterface::makeSurrenderRetreatDecision(const BattleID & battleID, const BattleStateInfoForRetreat & battleState)
 {
 	return std::nullopt;
@@ -1842,4 +1849,3 @@ void CPlayerInterface::unregisterBattleInterface(std::shared_ptr<CBattleGameInte
 	GAME->server().client->unregisterBattleInterface(autofightingAI, playerID);
 	autofightingAI.reset();
 }
-

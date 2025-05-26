@@ -145,6 +145,11 @@ std::string CArtifact::getNameTextID() const
 	return TextIdentifier("artifact", modScope, identifier, "name").get();
 }
 
+std::string CArtifact::getBonusTextID(const std::string & bonusID) const
+{
+	return TextIdentifier("artifact", modScope, identifier, "bonus", bonusID).get();
+}
+
 uint32_t CArtifact::getPrice() const
 {
 	return price;
@@ -246,6 +251,48 @@ bool CArtifact::canBePutAt(const CArtifactSet * artSet, ArtifactPosition slot, b
 	}
 }
 
+CChargedArtifact::CChargedArtifact()
+	: condition(DischargeArtifactCondition::NONE)
+	,	removeOnDepletion(false)
+	, defaultStartCharges(0)
+{
+}
+
+bool CChargedArtifact::isCharged() const
+{
+	return condition != DischargeArtifactCondition::NONE;
+}
+
+void CChargedArtifact::setCondition(const DischargeArtifactCondition & dischargeCondition)
+{
+	condition = dischargeCondition;
+}
+
+void CChargedArtifact::setRemoveOnDepletion(const bool remove)
+{
+	removeOnDepletion = remove;
+}
+
+void CChargedArtifact::setDefaultStartCharges(const uint16_t charges)
+{
+	defaultStartCharges = charges;
+}
+
+uint16_t CChargedArtifact::getDefaultStartCharges() const
+{
+	return defaultStartCharges;
+}
+
+DischargeArtifactCondition CChargedArtifact::getDischargeCondition() const
+{
+	return condition;
+}
+
+bool CChargedArtifact::getRemoveOnDepletion() const
+{
+	return removeOnDepletion;
+}
+
 CArtifact::CArtifact()
 	: iconIndex(ArtifactID::NONE),
 	price(0)
@@ -290,8 +337,11 @@ void CArtifact::addNewBonus(const std::shared_ptr<Bonus>& b)
 {
 	b->source = BonusSource::ARTIFACT;
 	b->duration = BonusDuration::PERMANENT;
-	b->description.appendTextID(getNameTextID());
-	b->description.appendRawString(" %+d");
+	if (b->description.empty() && (b->type == BonusType::LUCK || b->type == BonusType::MORALE))
+	{
+		b->description.appendTextID(getNameTextID());
+		b->description.appendRawString(" %+d");
+	}
 	CBonusSystemNode::addNewBonus(b);
 }
 

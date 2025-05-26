@@ -22,6 +22,7 @@ VCMI_LIB_NAMESPACE_BEGIN
 
 class EVictoryLossCheckResult;
 class Services;
+class IGameRandomizer;
 class IMapService;
 class CMap;
 class CSaveFile;
@@ -41,7 +42,7 @@ class UpgradeInfo;
 
 DLL_LINKAGE std::ostream & operator<<(std::ostream & os, const EVictoryLossCheckResult & victoryLossCheckResult);
 
-class DLL_LINKAGE CGameState : public CNonConstInfoCallback, public Serializeable, public GameCallbackHolder
+class DLL_LINKAGE CGameState : public CNonConstInfoCallback, public Serializeable
 {
 	friend class CGameStateCampaign;
 
@@ -54,9 +55,6 @@ public:
 	ArtifactInstanceID saveCompatibilityLastAllocatedArtifactID;
 	std::vector<std::shared_ptr<CArtifactInstance>> saveCompatibilityUnregisteredArtifacts;
 
-	/// Stores number of times each artifact was placed on map via randomization
-	std::map<ArtifactID, int> allocatedArtifacts;
-
 	/// List of currently ongoing battles
 	std::vector<std::unique_ptr<BattleInfo>> currentBattles;
 	/// ID that can be allocated to next battle
@@ -68,7 +66,7 @@ public:
 	/// list of players currently making turn. Usually - just one, except for simturns
 	std::set<PlayerColor> actingPlayers;
 
-	CGameState(IGameInfoCallback * callback);
+	CGameState();
 	virtual ~CGameState();
 
 	CGameState & gameState() final { return *this; }
@@ -76,7 +74,7 @@ public:
 
 	void preInit(Services * services);
 
-	void init(const IMapService * mapService, StartInfo * si, vstd::RNG & randomGenerator, Load::ProgressAccumulator &, bool allowSavingRandomMap = true);
+	void init(const IMapService * mapService, StartInfo * si, IGameRandomizer & gameRandomizer, Load::ProgressAccumulator &, bool allowSavingRandomMap = true);
 	void updateOnLoad(StartInfo * si);
 
 	ui32 day; //total number of days in game
@@ -84,8 +82,6 @@ public:
 	std::map<TeamID, TeamState> teams;
 	CBonusSystemNode globalEffects;
 	RumorState currentRumor;
-
-	StatisticDataSet statistic;
 
 	// NOTE: effectively AI mutex, only used by adventure map AI
 	static std::shared_mutex mutex;
@@ -97,18 +93,11 @@ public:
 	HeroTypeID pickNextHeroType(vstd::RNG & randomGenerator, const PlayerColor & owner);
 
 	void apply(CPackForClient & pack);
-	BattleField battleGetBattlefieldType(int3 tile, vstd::RNG & randomGenerator);
+	BattleField battleGetBattlefieldType(int3 tile, vstd::RNG & randomGenerator) const;
 
 	PlayerRelations getPlayerRelations(PlayerColor color1, PlayerColor color2) const override;
-	bool checkForVisitableDir(const int3 & src, const int3 & dst) const; //check if src tile is visitable from dst tile
 	void calculatePaths(const std::shared_ptr<PathfinderConfig> & config) const override;
 	std::vector<const CGObjectInstance*> guardingCreatures (int3 pos) const;
-
-	/// Gets a artifact ID randomly and removes the selected artifact from this handler.
-	ArtifactID pickRandomArtifact(vstd::RNG & randomGenerator, std::optional<EArtifactClass> type);
-	ArtifactID pickRandomArtifact(vstd::RNG & randomGenerator, std::function<bool(ArtifactID)> accepts);
-	ArtifactID pickRandomArtifact(vstd::RNG & randomGenerator, std::optional<EArtifactClass> type, std::function<bool(ArtifactID)> accepts);
-	ArtifactID pickRandomArtifact(vstd::RNG & randomGenerator, std::set<ArtifactID> filtered);
 
 	/// Creates instance of spell scroll artifact with provided spell
 	CArtifactInstance * createScroll(const SpellID & spellId);
@@ -132,7 +121,8 @@ public:
 	PlayerColor checkForStandardWin() const; //returns color of player that accomplished standard victory conditions or 255 (NEUTRAL) if no winner
 	bool checkForStandardLoss(const PlayerColor & player) const; //checks if given player lost the game
 
-	void obtainPlayersStats(SThievesGuildInfo & tgi, int level); //fills tgi with info about other players that is available at given level of thieves' guild
+	//fills tgi with info about other players that is available at given level of thieves' guild
+	void obtainPlayersStats(SThievesGuildInfo & tgi, int level) const;
 	const IGameSettings & getSettings() const override;
 
 	StartInfo * getStartInfo()
@@ -188,8 +178,16 @@ public:
 		h & globalEffects;
 		h & currentRumor;
 		h & campaign;
-		h & allocatedArtifacts;
-		h & statistic;
+		if (!h.hasFeature(Handler::Version::RANDOMIZATION_REWORK))
+		{
+			std::map<ArtifactID, int> allocatedArtifactsUnused;
+			h & allocatedArtifactsUnused;
+		}
+		if (!h.hasFeature(Handler::Version::SERVER_STATISTICS))
+		{
+			StatisticDataSet statistic;
+			h & statistic;
+		}
 
 		if(!h.saving && h.loadingGamestate)
 			restoreBonusSystemTree();
@@ -202,19 +200,19 @@ private:
 	void initGrailPosition(vstd::RNG & randomGenerator);
 	void initRandomFactionsForPlayers(vstd::RNG & randomGenerator);
 	void initOwnedObjects();
-	void randomizeMapObjects(vstd::RNG & randomGenerator);
+	void randomizeMapObjects(IGameRandomizer & gameRandomizer);
 	void initPlayerStates();
 	void placeStartingHeroes(vstd::RNG & randomGenerator);
 	void placeStartingHero(const PlayerColor & playerColor, const HeroTypeID & heroTypeId, int3 townPos);
 	void removeHeroPlaceholders();
 	void initDifficulty();
-	void initHeroes(vstd::RNG & randomGenerator);
+	void initHeroes(IGameRandomizer & gameRandomizer);
 	void placeHeroesInTowns();
 	void initFogOfWar();
-	void initStartingBonus(vstd::RNG & randomGenerator);
+	void initStartingBonus(IGameRandomizer & gameRandomizer);
 	void initTowns(vstd::RNG & randomGenerator);
 	void initTownNames(vstd::RNG & randomGenerator);
-	void initMapObjects(vstd::RNG & randomGenerator);
+	void initMapObjects(IGameRandomizer & gameRandomizer);
 	void initVisitingAndGarrisonedHeroes();
 	void initCampaign();
 

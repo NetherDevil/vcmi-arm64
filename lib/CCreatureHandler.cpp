@@ -228,6 +228,11 @@ std::string CCreature::getDescriptionTextID() const
 	return TextIdentifier("creatures", modScope, identifier, "description").get();
 }
 
+std::string CCreature::getBonusTextID(const std::string & bonusID) const
+{
+	return TextIdentifier("creatures", modScope, identifier, "bonus", bonusID).get();
+}
+
 CCreature::CreatureQuantityId CCreature::getQuantityID(const int & quantity)
 {
 	if (quantity<5)
@@ -904,7 +909,7 @@ void CCreatureHandler::loadCreatureJson(CCreature * creature, const JsonNode & c
 		{
 			if (!ability.second.isNull())
 			{
-				auto b = JsonUtils::parseBonus(ability.second);
+				auto b = JsonUtils::parseBonus(ability.second, creature->getBonusTextID(ability.first));
 				b->source = BonusSource::CREATURE_ABILITY;
 				b->sid = BonusSourceID(creature->getId());
 				b->duration = BonusDuration::PERMANENT;
@@ -1357,34 +1362,20 @@ CCreatureHandler::~CCreatureHandler()
 		p.first.clear();
 }
 
-CreatureID CCreatureHandler::pickRandomMonster(vstd::RNG & rand, int tier) const
-{
-	std::vector<CreatureID> allowed;
-	for(const auto & creature : objects)
-	{
-		if(creature->special)
-			continue;
-
-		if(creature->excludeFromRandomization)
-			continue;
-
-		if (creature->level == tier || tier == -1)
-			allowed.push_back(creature->getId());
-	}
-
-	if(allowed.empty())
-	{
-		logGlobal->warn("Cannot pick a random creature of tier %d!", tier);
-		return CreatureID::NONE;
-	}
-
-	return *RandomGeneratorUtil::nextItem(allowed, rand);
-}
-
-
 void CCreatureHandler::afterLoadFinalization()
 {
 
+}
+
+std::set<CreatureID> CCreatureHandler::getDefaultAllowed() const
+{
+	std::set<CreatureID> result;
+
+	for(auto & creature : objects)
+		if (creature && !creature->special)
+			result.insert(creature->getId());
+
+	return result;
 }
 
 VCMI_LIB_NAMESPACE_END

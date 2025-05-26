@@ -361,7 +361,7 @@ void CGameStateCampaign::giveCampaignBonusToHero(CGHeroInstance * hero)
 		}
 		case CampaignBonusType::SECONDARY_SKILL:
 		{
-			hero->setSecSkillLevel(SecondarySkill(curBonus->info2), curBonus->info3, true);
+			hero->setSecSkillLevel(SecondarySkill(curBonus->info2), curBonus->info3, ChangeValueMode::ABSOLUTE);
 			break;
 		}
 	}
@@ -694,7 +694,7 @@ bool CGameStateCampaign::playerHasStartingHero(PlayerColor playerColor) const
 
 std::unique_ptr<CMap> CGameStateCampaign::getCurrentMap()
 {
-	return gameState->scenarioOps->campState->getMap(CampaignScenarioID::NONE, gameState->cb);
+	return gameState->scenarioOps->campState->getMap(CampaignScenarioID::NONE, gameState);
 }
 
 VCMI_LIB_NAMESPACE_END

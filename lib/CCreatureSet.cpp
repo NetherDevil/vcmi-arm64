@@ -835,13 +835,18 @@ void CStackInstance::setCount(TQuantity newCount)
 	CStackBasicDescriptor::setCount(newCount);
 }
 
-std::string CStackInstance::bonusToString(const std::shared_ptr<Bonus>& bonus, bool description) const
+std::string CStackInstance::bonusToString(const std::shared_ptr<Bonus>& bonus) const
 {
-	return LIBRARY->getBth()->bonusToString(bonus, this, description);
+	if (!bonus->description.empty())
+		return bonus->description.toString();
+	else
+		return LIBRARY->getBth()->bonusToString(bonus, this);
 }
 
 ImagePath CStackInstance::bonusToGraphics(const std::shared_ptr<Bonus> & bonus) const
 {
+	if (!bonus->customIconPath.empty())
+		return bonus->customIconPath;
 	return LIBRARY->getBth()->bonusToGraphics(bonus);
 }
 

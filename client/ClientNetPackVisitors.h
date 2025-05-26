@@ -23,10 +23,10 @@ class ApplyClientNetPackVisitor : public VCMI_LIB_WRAP_NAMESPACE(ICPackVisitor)
 {
 private:
 	CClient & cl;
-	CGameState & gs;
+	const CGameState & gs;
 
 public:
-	ApplyClientNetPackVisitor(CClient & cl, CGameState & gs)
+	ApplyClientNetPackVisitor(CClient & cl, const CGameState & gs)
 		:cl(cl), gs(gs)
 	{
 	}
@@ -103,16 +103,17 @@ public:
 	void visitNewObject(NewObject & pack) override;
 	void visitSetAvailableArtifacts(SetAvailableArtifacts & pack) override;
 	void visitEntitiesChanged(EntitiesChanged & pack) override;
+	void visitPlayerCheated(PlayerCheated & pack) override;
 };
 
 class ApplyFirstClientNetPackVisitor : public VCMI_LIB_WRAP_NAMESPACE(ICPackVisitor)
 {
 private:
 	CClient & cl;
-	CGameState & gs;
+	const CGameState & gs;
 
 public:
-	ApplyFirstClientNetPackVisitor(CClient & cl, CGameState & gs)
+	ApplyFirstClientNetPackVisitor(CClient & cl, const CGameState & gs)
 		:cl(cl), gs(gs)
 	{
 	}
