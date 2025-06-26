@@ -41,6 +41,7 @@
 #include "../../lib/networkPacks/ArtifactLocation.h"
 #include "../../lib/texts/CGeneralTextHandler.h"
 #include "../../lib/texts/TextOperations.h"
+#include "../../lib/texts/Languages.h"
 
 class CCreatureArtifactInstance;
 class CSelectableSkill;
@@ -224,27 +225,29 @@ CStackWindow::ActiveSpellsSection::ActiveSpellsSection(CStackWindow * owner, int
 	{
 		const spells::Spell * spell = LIBRARY->spells()->getById(effect);
 
-		std::string spellText;
-
 		//not all effects have graphics (for eg. Acid Breath)
 		//for modded spells iconEffect is added to SpellInt.def
 		const bool hasGraphics = (effect < SpellID::THUNDERBOLT) || (effect >= SpellID::AFTER_LAST);
 
 		if (hasGraphics)
 		{
-			spellText = LIBRARY->generaltexth->allTexts[610]; //"%s, duration: %d rounds."
-			boost::replace_first(spellText, "%s", spell->getNameTranslated());
-			//FIXME: support permanent duration
 			auto spellBonuses = battleStack->getBonuses(Selector::source(BonusSource::SPELL_EFFECT, BonusSourceID(effect)));
 			if (spellBonuses->empty())
 				throw std::runtime_error("Failed to find effects for spell " + effect.toSpell()->getJsonKey());
 
 			int duration = spellBonuses->front()->turnsRemain;
-			boost::replace_first(spellText, "%d", std::to_string(duration));
+			std::string preferredLanguage = LIBRARY->generaltexth->getPreferredLanguage();
+
+			MetaString spellText;
+			spellText.appendTextID(spell->getDescriptionTextID(0)); // TODO: select correct mastery level?
+			spellText.appendRawString("\n");
+			spellText.appendTextID(Languages::getPluralFormTextID( preferredLanguage, duration, "vcmi.battleResultsWindow.spellDurationRemaining"));
+			spellText.replaceNumber(duration);
+			std::string spellDescription = spellText.toString();
 
 			spellIcons.push_back(std::make_shared<CAnimImage>(AnimationPath::builtin("SpellInt"), effect + 1, 0, firstPos.x + offset.x * printed, firstPos.y + offset.y * printed));
 			labels.push_back(std::make_shared<CLabel>(firstPos.x + offset.x * printed + 46, firstPos.y + offset.y * printed + 36, EFonts::FONT_TINY, ETextAlignment::BOTTOMRIGHT, Colors::WHITE, std::to_string(duration)));
-			clickableAreas.push_back(std::make_shared<LRClickableAreaWText>(Rect(firstPos + offset * printed, Point(50, 38)), spellText, spellText));
+			clickableAreas.push_back(std::make_shared<LRClickableAreaWText>(Rect(firstPos + offset * printed, Point(50, 38)), spellDescription, spellDescription));
 			if(++printed >= 8) // interface limit reached
 				break;
 		}
@@ -482,7 +485,7 @@ CStackWindow::CommanderMainSection::CommanderMainSection(CStackWindow * owner, i
 
 	auto getArtifactPos = [](int index)
 	{
-		return Point(269 + 47 * (index % 3), 22 + 47 * (index / 3));
+		return Point(269 + 52 * (index % 3), 22 + 52 * (index / 3));
 	};
 
 	for(auto equippedArtifact : parent->info->commander->artifactsWorn)
@@ -847,6 +850,10 @@ void CStackWindow::initBonusesList()
 {
 	BonusList receivedBonuses = *info->stackNode->getBonuses(CSelector(Bonus::Permanent), Selector::all);
 	BonusList abilities = info->creature->getExportedBonusList();
+
+	// remove all bonuses that are not propagated away
+	// such bonuses should be present in received bonuses, and if not - this means that they are behind inactive limiter, such as inactive stack experience bonuses
+	abilities.remove_if([](const Bonus* b){ return b->propagator == nullptr;});
 
 	const auto & bonusSortingPredicate = [this](const std::shared_ptr<Bonus> & v1, const std::shared_ptr<Bonus> & v2){
 		if (v1->source != v2->source)

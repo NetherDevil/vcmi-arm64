@@ -28,6 +28,7 @@
 #include "../CPlayerState.h"
 #include "../IGameSettings.h"
 #include "../CConfigHandler.h"
+#include "../texts/CGeneralTextHandler.h"
 
 #include <vstd/RNG.h>
 
@@ -213,15 +214,27 @@ void CGDwelling::setPropertyDer(ObjProperty what, ObjPropertyID identifier)
 
 void CGDwelling::onHeroVisit(IGameEventCallback & gameEvents, const CGHeroInstance * h) const
 {
-	if(ID == Obj::REFUGEE_CAMP && !creatures[0].first) //Refugee Camp, no available cres
+	if(ID == Obj::REFUGEE_CAMP)
 	{
-		InfoWindow iw;
-		iw.type = EInfoWindowMode::AUTO;
-		iw.player = h->tempOwner;
-		iw.text.appendLocalString(EMetaText::ADVOB_TXT, 44); //{%s} \n\n The camp is deserted.  Perhaps you should try next week.
-		iw.text.replaceName(ID, subID);
-		gameEvents.sendAndApply(iw);
-		return;
+		ChangeObjectVisitors cow;
+		cow.mode = ChangeObjectVisitors::VISITOR_CLEAR;
+		cow.object = id;
+		gameEvents.sendAndApply(cow);
+
+		cow.mode = ChangeObjectVisitors::VISITOR_ADD_PLAYER;
+		cow.hero = h->id;
+		gameEvents.sendAndApply(cow);
+
+		if (!creatures[0].first) //Refugee Camp, no available cres
+		{
+			InfoWindow iw;
+			iw.type = EInfoWindowMode::AUTO;
+			iw.player = h->tempOwner;
+			iw.text.appendLocalString(EMetaText::ADVOB_TXT, 44); //{%s} \n\n The camp is deserted.  Perhaps you should try next week.
+			iw.text.replaceName(ID, subID);
+			gameEvents.sendAndApply(iw);
+			return;
+		}
 	}
 
 	PlayerRelations relations = cb->getPlayerRelations( h->tempOwner, tempOwner );
@@ -254,7 +267,15 @@ void CGDwelling::onHeroVisit(IGameEventCallback & gameEvents, const CGHeroInstan
 	bd.player = h->tempOwner;
 	if(ID == Obj::CREATURE_GENERATOR1 || ID == Obj::CREATURE_GENERATOR4)
 	{
-		bd.text.appendLocalString(EMetaText::ADVOB_TXT, creatures.size() == 1 ? 35 : 36); //{%s} Would you like to recruit %s? / {%s} Would you like to recruit %s, %s, %s, or %s?
+		const size_t count = std::min<size_t>(creatures.size(), 4);
+		constexpr std::array dwellingVisitTextID = {
+			"core.advevent.35", // 0 creatures, should not happen
+			"core.advevent.35",
+			"vcmi.adventureMap.dwelling2",
+			"vcmi.adventureMap.dwelling3",
+			"core.advevent.36"
+		};
+		bd.text.appendTextID(dwellingVisitTextID[count]);	
 		bd.text.replaceTextID(getObjectHandler()->getNameTextID());
 		for(const auto & elem : creatures)
 			bd.text.replaceNamePlural(elem.second[0]);
@@ -290,6 +311,11 @@ void CGDwelling::newTurn(IGameEventCallback & gameEvents, IGameRandomizer & game
 
 	if(ID == Obj::REFUGEE_CAMP) //if it's a refugee camp, we need to pick an available creature
 	{
+		ChangeObjectVisitors cow;
+		cow.mode = ChangeObjectVisitors::VISITOR_CLEAR;
+		cow.object = id;
+		gameEvents.sendAndApply(cow);
+
 		gameEvents.setObjPropertyID(id, ObjProperty::AVAILABLE_CREATURE, gameRandomizer.rollCreature());
 	}
 
@@ -325,33 +351,34 @@ void CGDwelling::newTurn(IGameEventCallback & gameEvents, IGameRandomizer & game
 	updateGuards(gameEvents);
 }
 
+bool CGDwelling::wasVisited (PlayerColor player) const
+{
+	return cb->getPlayerState(player)->visitedObjects.count(id) != 0;
+}
+
 std::vector<Component> CGDwelling::getPopupComponents(PlayerColor player) const
 {
 	bool visitedByOwner = getOwner() == player;
+	bool isDwelling = ID == Obj::CREATURE_GENERATOR1 || ID == Obj::CREATURE_GENERATOR4;
+	bool isRefugeeCamp = ID == Obj::REFUGEE_CAMP;
+	bool canSeeUnitTypes = isDwelling || (isRefugeeCamp && wasVisited(player));
+	bool canSeeUnitAmount = (isDwelling && visitedByOwner) || (isRefugeeCamp && wasVisited(player));
 
 	std::vector<Component> result;
 
-	if (ID == Obj::CREATURE_GENERATOR1 && !creatures.empty())
-	{
-		for (auto const & creature : creatures.front().second)
-		{
-			if (visitedByOwner)
-				result.emplace_back(ComponentType::CREATURE, creature, creatures.front().first);
-			else
-				result.emplace_back(ComponentType::CREATURE, creature);
-		}
-	}
+	if (creatures.empty())
+		return result;
 
-	if (ID == Obj::CREATURE_GENERATOR4)
+	if (canSeeUnitTypes)
 	{
 		for (auto const & creatureLevel : creatures)
 		{
-			if (!creatureLevel.second.empty())
+			for (auto const & creature : creatureLevel.second)
 			{
-				if (visitedByOwner)
-					result.emplace_back(ComponentType::CREATURE, creatureLevel.second.back(), creatureLevel.first);
+				if (canSeeUnitAmount)
+					result.emplace_back(ComponentType::CREATURE, creature, creatures.front().first);
 				else
-					result.emplace_back(ComponentType::CREATURE, creatureLevel.second.back());
+					result.emplace_back(ComponentType::CREATURE, creature);
 			}
 		}
 	}

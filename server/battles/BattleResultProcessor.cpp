@@ -31,9 +31,8 @@
 
 #include <boost/lexical_cast.hpp>
 
-BattleResultProcessor::BattleResultProcessor(BattleProcessor * owner, CGameHandler * newGameHandler)
-//	: owner(owner)
-	: gameHandler(newGameHandler)
+BattleResultProcessor::BattleResultProcessor(CGameHandler * gameHandler)
+	: gameHandler(gameHandler)
 {
 }
 
@@ -62,7 +61,7 @@ CasualtiesAfterBattle::CasualtiesAfterBattle(const CBattleInfoCallback & battle,
 	{
 		// Use const cast - in order to call non-const "takeResurrected" for proper calculation of casualties
 		// TODO: better solution
-		CStack * st = const_cast<CStack*>(stConst);
+		auto * st = const_cast<CStack*>(stConst);
 
 		logGlobal->debug("Calculating casualties for %s", st->nodeName());
 
@@ -146,7 +145,7 @@ void CasualtiesAfterBattle::updateArmy(CGameHandler *gh)
 	if (gh->gameInfo().getObjInstance(army->id) == nullptr)
 		throw std::runtime_error("Object " + army->getObjectName() + " is not on the map!");
 
-	for (TStackAndItsNewCount &ncount : newStackCounts)
+	for (const auto & ncount : newStackCounts)
 	{
 		if (ncount.second > 0)
 			gh->changeStackCount(ncount.first, ncount.second, ChangeValueMode::ABSOLUTE);
@@ -263,7 +262,7 @@ void BattleResultProcessor::endBattle(const CBattleInfoCallback & battle)
 	battleQuery->result = std::make_optional(*battleResult);
 
 	//Check how many battle gameHandler->queries were created (number of players blocked by battle)
-	const int queriedPlayers = battleQuery ? (int)boost::count(gameHandler->queries->allQueries(), battleQuery) : 0;
+	const int queriedPlayers = battleQuery ? boost::count(gameHandler->queries->allQueries(), battleQuery) : 0;
 
 	assert(finishingBattles.count(battle.getBattle()->getBattleID()) == 0);
 	finishingBattles[battle.getBattle()->getBattleID()] = std::make_unique<FinishingBattleHelper>(battle, *battleResult, queriedPlayers);
@@ -310,8 +309,8 @@ void BattleResultProcessor::endBattleConfirm(const CBattleInfoCallback & battle)
 		return;
 	}
 
-	auto * battleResult = battleResults.at(battle.getBattle()->getBattleID()).get();
-	auto * finishingBattle = finishingBattles.at(battle.getBattle()->getBattleID()).get();
+	const auto * battleResult = battleResults.at(battle.getBattle()->getBattleID()).get();
+	const auto * finishingBattle = finishingBattles.at(battle.getBattle()->getBattleID()).get();
 
 	//calculate casualties before deleting battle
 	CasualtiesAfterBattle cab1(battle, BattleSide::ATTACKER);
@@ -323,17 +322,13 @@ void BattleResultProcessor::endBattleConfirm(const CBattleInfoCallback & battle)
 	const auto winnerHero = battle.battleGetFightingHero(finishingBattle->winnerSide);
 	const auto loserHero = battle.battleGetFightingHero(CBattleInfoEssentials::otherSide(finishingBattle->winnerSide));
 
-	if(battleResult->winner == BattleSide::DEFENDER
-	   && winnerHero
-	   && winnerHero->getVisitedTown()
-	   && !winnerHero->isGarrisoned()
-	   && winnerHero->getVisitedTown()->getGarrisonHero() == winnerHero)
-	{
-		gameHandler->swapGarrisonOnSiege(winnerHero->getVisitedTown()->id); //return defending visitor from garrison to its rightful place
-	}
 	//give exp
-	if(!finishingBattle->isDraw() && battleResult->exp[finishingBattle->winnerSide] && winnerHero)
-		gameHandler->giveExperience(winnerHero, battleResult->exp[finishingBattle->winnerSide]);
+	if(!finishingBattle->isDraw() && battleResult->exp[finishingBattle->winnerSide])
+	{
+		gameHandler->giveStackExperience(battle.battleGetArmyObject(finishingBattle->winnerSide), battleResult->exp[finishingBattle->winnerSide]);
+		if (winnerHero)
+			gameHandler->giveExperience(winnerHero, battleResult->exp[finishingBattle->winnerSide]);
+	}
 
 	// Add statistics
 	if(loserHero && !finishingBattle->isDraw())
@@ -543,9 +538,6 @@ void BattleResultProcessor::battleFinalize(const BattleID & battleID, const Batt
 	resultsApplied.loser = finishingBattle->loser;
 	gameHandler->sendAndApply(resultsApplied);
 
-	//handle victory/loss of engaged players
-	gameHandler->checkVictoryLossConditions({finishingBattle->loser, finishingBattle->victor});
-
 	// Remove beaten hero
 	if(loserHero)
 	{
@@ -560,6 +552,9 @@ void BattleResultProcessor::battleFinalize(const BattleID & battleID, const Batt
 		if(gameHandler->gameInfo().getSettings().getBoolean(EGameSettings::HEROES_RETREAT_ON_WIN_WITHOUT_TROOPS))
 			gameHandler->heroPool->onHeroEscaped(finishingBattle->victor, winnerHero);
 	}
+
+	//handle victory/loss of engaged players
+	gameHandler->checkVictoryLossConditions({finishingBattle->loser, finishingBattle->victor});
 
 	if (result.result == EBattleResult::SURRENDER)
 	{

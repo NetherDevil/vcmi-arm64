@@ -554,6 +554,7 @@ void CGameState::placeStartingHero(const PlayerColor & playerColor, const HeroTy
 		hero = std::dynamic_pointer_cast<CGHeroInstance>(object);
 		hero->ID = Obj::HERO;
 		hero->setHeroType(heroTypeId);
+		assert(hero->appearance != nullptr);
 	}
 
 	hero->tempOwner = playerColor;
@@ -786,12 +787,6 @@ void CGameState::initTowns(vstd::RNG & randomGenerator)
 
 	if (campaign)
 		campaign->initTowns();
-
-	map->townUniversitySkills.clear();
-	map->townUniversitySkills.push_back(SecondarySkill(SecondarySkill::FIRE_MAGIC));
-	map->townUniversitySkills.push_back(SecondarySkill(SecondarySkill::AIR_MAGIC));
-	map->townUniversitySkills.push_back(SecondarySkill(SecondarySkill::WATER_MAGIC));
-	map->townUniversitySkills.push_back(SecondarySkill(SecondarySkill::EARTH_MAGIC));
 
 	for (const auto & townID : map->getAllTowns())
 	{
@@ -1163,9 +1158,6 @@ bool CGameState::isVisibleFor(int3 pos, PlayerColor player) const
 
 bool CGameState::isVisibleFor(const CGObjectInstance * obj, PlayerColor player) const
 {
-	if(!player)
-		return true;
-
 	//we should always see our own heroes - but sometimes not visible heroes cause crash :?
 	if (player == obj->tempOwner)
 		return true;
@@ -1188,8 +1180,6 @@ bool CGameState::isVisibleFor(const CGObjectInstance * obj, PlayerColor player) 
 	}
 	return false;
 }
-
-
 
 EVictoryLossCheckResult CGameState::checkForVictoryAndLoss(const PlayerColor & player) const
 {

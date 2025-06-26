@@ -202,7 +202,8 @@
             ],
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "FORCE_BUNDLED_FL": "ON"
+                "FORCE_BUNDLED_FL": "ON",
+                "ENABLE_TEMPLATE_EDITOR": "OFF"
             }
         },
         {
@@ -220,7 +221,8 @@
                 "default-release"
             ],
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_TEMPLATE_EDITOR": "OFF"
             }
         },
         {

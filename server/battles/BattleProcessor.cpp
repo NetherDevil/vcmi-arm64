@@ -37,9 +37,9 @@
 
 BattleProcessor::BattleProcessor(CGameHandler * gameHandler)
 	: gameHandler(gameHandler)
-	, flowProcessor(std::make_unique<BattleFlowProcessor>(this, gameHandler))
 	, actionsProcessor(std::make_unique<BattleActionProcessor>(this, gameHandler))
-	, resultProcessor(std::make_unique<BattleResultProcessor>(this, gameHandler))
+	, flowProcessor(std::make_unique<BattleFlowProcessor>(this, gameHandler))
+	, resultProcessor(std::make_unique<BattleResultProcessor>(gameHandler))
 {
 }
 
@@ -78,6 +78,7 @@ void BattleProcessor::restartBattle(const BattleID & battleID, const CArmedInsta
 				SetMana restoreInitialMana;
 				restoreInitialMana.val = lastBattleQuery->initialHeroMana[i];
 				restoreInitialMana.hid = heroes[i]->id;
+				restoreInitialMana.mode = ChangeValueMode::ABSOLUTE;
 				gameHandler->sendAndApply(restoreInitialMana);
 			}
 		}
@@ -113,7 +114,7 @@ void BattleProcessor::startBattle(const CArmedInstance *army1, const CArmedInsta
 	const auto * attackerInfo = gameHandler->gameInfo().getPlayerState(army1->getOwner(), false);
 	if(attackerInfo && !army2->getOwner().isValidPlayer())
 	{
-		for(auto bonus : attackerInfo->battleBonuses)
+		for(const auto & bonus : attackerInfo->battleBonuses)
 		{
 			GiveBonus giveBonus(GiveBonus::ETarget::OBJECT);
 			giveBonus.id = hero1->id;

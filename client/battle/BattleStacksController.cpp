@@ -10,27 +10,26 @@
 #include "StdInc.h"
 #include "BattleStacksController.h"
 
-#include "BattleSiegeController.h"
-#include "BattleInterfaceClasses.h"
-#include "BattleInterface.h"
 #include "BattleActionsController.h"
 #include "BattleAnimationClasses.h"
-#include "BattleFieldController.h"
 #include "BattleEffectsController.h"
+#include "BattleFieldController.h"
+#include "BattleInterface.h"
 #include "BattleProjectileController.h"
-#include "BattleWindow.h"
 #include "BattleRenderer.h"
+#include "BattleSiegeController.h"
+#include "BattleWindow.h"
 #include "CreatureAnimation.h"
 
 #include "../CPlayerInterface.h"
 #include "../GameEngine.h"
 #include "../gui/WindowHandler.h"
 #include "../media/ISoundPlayer.h"
-#include "../render/Colors.h"
 #include "../render/Canvas.h"
-#include "../render/IRenderHandler.h"
+#include "../render/Colors.h"
 #include "../render/Graphics.h"
 #include "../render/IFont.h"
+#include "../render/IRenderHandler.h"
 
 #include "../../lib/CConfigHandler.h"
 #include "../../lib/CRandomGenerator.h"
@@ -442,7 +441,9 @@ void BattleStacksController::stacksAreAttacked(std::vector<StackAttackedInfo> at
 
 		// FIXME: this check is better, however not usable since stacksAreAttacked is called after net pack is applied - petrification is already removed
 		// if (needsReverse && !attackedInfo.defender->isFrozen())
-		if (needsReverse && stackAnimation[attackedInfo.defender->unitId()]->getType() != ECreatureAnimType::FROZEN)
+		if (needsReverse &&
+		   stackAnimation[attackedInfo.defender->unitId()]->getType() != ECreatureAnimType::FROZEN &&
+		   !attackedInfo.defender->hasBonusOfType(BonusType::VULNERABLE_FROM_BACK))
 		{
 			owner.addToAnimationStage(EAnimationEvents::MOVEMENT, [this, attackedInfo]()
 			{

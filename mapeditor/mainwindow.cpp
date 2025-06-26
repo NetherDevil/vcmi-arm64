@@ -46,10 +46,13 @@
 #include "mapsettings/mapsettings.h"
 #include "mapsettings/translations.h"
 #include "mapsettings/modsettings.h"
-#include "playersettings.h"
+#include "PlayerSettingsDialog.h"
 #include "validator.h"
 #include "helper.h"
 #include "campaigneditor/campaigneditor.h"
+#ifdef ENABLE_TEMPLATE_EDITOR
+#include "templateeditor/templateeditor.h"
+#endif
 
 QJsonValue jsonFromPixmap(const QPixmap &p)
 {
@@ -261,6 +264,11 @@ MainWindow::MainWindow(QWidget* parent) :
 	ui->actionZoom_out->setIcon(QIcon{":/icons/zoom_minus.png"});
 	ui->actionZoom_reset->setIcon(QIcon{":/icons/zoom_zero.png"});
 	ui->actionCampaignEditor->setIcon(QIcon{":/icons/mapeditor.64x64.png"});
+	ui->actionTemplateEditor->setIcon(QIcon{":/icons/dice.png"});
+
+#ifndef ENABLE_TEMPLATE_EDITOR
+	ui->actionTemplateEditor->setVisible(false);
+#endif
 
 	loadUserSettings(); //For example window size
 	setTitle();
@@ -395,7 +403,7 @@ bool MainWindow::openMap(const QString & filenameSelect)
 {
 	try
 	{
-		controller.setMap(Helper::openMapInternal(filenameSelect));
+		controller.setMap(Helper::openMapInternal(filenameSelect, controller.getCallback()));
 	}
 	catch(const ModIncompatibility & e)
 	{
@@ -606,6 +614,17 @@ void MainWindow::on_actionCampaignEditor_triggered()
 	CampaignEditor::showCampaignEditor();
 }
 
+void MainWindow::on_actionTemplateEditor_triggered()
+{
+#ifdef ENABLE_TEMPLATE_EDITOR
+	if(!getAnswerAboutUnsavedChanges())
+		return;
+
+	hide();
+	TemplateEditor::showTemplateEditor();
+#endif
+}
+
 void MainWindow::on_actionNew_triggered()
 {
 	if(getAnswerAboutUnsavedChanges())
@@ -703,7 +722,7 @@ void MainWindow::addGroupIntoCatalog(const QString & groupName, bool useCustomNa
 			}
 			
 			//create object to extract name
-			auto temporaryObj(factory->create(nullptr, templ));
+			auto temporaryObj(factory->create(controller.getCallback(), templ));
 			QString translated = useCustomName ? QString::fromStdString(temporaryObj->getObjectName().c_str()) : subGroupName;
 			itemType->setText(translated);
 			
@@ -1143,7 +1162,7 @@ void MainWindow::on_actionMapSettings_triggered()
 
 void MainWindow::on_actionPlayers_settings_triggered()
 {
-	auto settingsDialog = new PlayerSettings(controller, this);
+	auto settingsDialog = new PlayerSettingsDialog(controller, this);
 	settingsDialog->setWindowModality(Qt::WindowModal);
 	settingsDialog->setModal(true);
 	connect(settingsDialog, &QDialog::finished, this, &MainWindow::onPlayersChanged);
@@ -1370,7 +1389,8 @@ void MainWindow::on_actionh3m_converter_triggered()
 		for(auto & m : mapFiles)
 		{
 			CMapService mapService;
-			auto map = Helper::openMapInternal(m);
+			auto map = Helper::openMapInternal(m, controller.getCallback());
+			controller.setCallback(std::make_unique<EditorCallback>(map.get()));
 			controller.repairMap(map.get());
 			mapService.saveMap(map, (saveDirectory + '/' + QFileInfo(m).completeBaseName() + ".vmap").toStdString());
 		}

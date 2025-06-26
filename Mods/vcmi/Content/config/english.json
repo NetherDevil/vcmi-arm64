@@ -28,7 +28,17 @@
 	"vcmi.adventureMap.movementPointsHeroInfo"           : "(Movement points: %REMAINING / %POINTS)",
 	"vcmi.adventureMap.replayOpponentTurnNotImplemented" : "Sorry, replay opponent turn is not implemented yet!",
 
+	"vcmi.adventureMap.dwelling2" : "{%s}\n\nWould you like to recruit %s or %s?",
+	"vcmi.adventureMap.dwelling3" : "{%s}\n\nWould you like to recruit %s, %s, or %s?",
+	
 	"vcmi.artifact.charges" : "Charges",
+	
+	"vcmi.battle.action.move" : "Move unit to specified location",
+	"vcmi.battle.action.info" : "Show unit information",
+	"vcmi.battle.action.shoot" : "Use ranged attack",
+	"vcmi.battle.action.attack" : "Use melee attack",
+	"vcmi.battle.action.return" : "Use melee attack and return",
+	"vcmi.battle.action.genie" : "Cast random beneficial spell",
 
 	"vcmi.bonusSource.artifact" : "Artifact",
 	"vcmi.bonusSource.creature" : "Ability",
@@ -342,6 +352,8 @@
 	"vcmi.adventureOptions.mapScrollSpeed6.help" : "Set the map scrolling speed to instantaneous.",
 	"vcmi.adventureOptions.hideBackground.hover" : "Hide Background",
 	"vcmi.adventureOptions.hideBackground.help" : "{Hide Background}\n\nHide the adventuremap in the background and show a texture instead.",
+	"vcmi.adventureOptions.minimapShowHeroes.hover" : "Show Heroes On Minimap",
+	"vcmi.adventureOptions.minimapShowHeroes.help" : "{Show Heroes On Minimap}\n\nShow addition icon for all heroes visible on minimap, making them more easy to see on large maps",
 
 	"vcmi.battleOptions.queueSizeLabel.hover" : "Show Turn Order Queue",
 	"vcmi.battleOptions.queueSizeNoneButton.hover" : "OFF",
@@ -401,6 +413,9 @@
 	"vcmi.battleWindow.endWithAutocombat" : "Are you sure you wish to end the battle with auto combat?",
 
 	"vcmi.battleResultsWindow.applyResultsLabel" : "Accept battle result?",
+	"vcmi.battleResultsWindow.spellDurationRemaining.0" : "Remaining duration : %d combat rounds",
+	"vcmi.battleResultsWindow.spellDurationRemaining.1" : "Remaining duration : %d combat round",
+	"vcmi.battleResultsWindow.spellDurationRemaining.2" : "Remaining duration : %d combat rounds",
 
 	"vcmi.tutorialWindow.title" : "Touchscreen Introduction",
 	"vcmi.tutorialWindow.decription.RightClick" : "Touch and hold the element on which you want to right-click. Touch the free area to close.",
@@ -426,6 +441,9 @@
 
 	"vcmi.townWindow.upgradeAll.notAllUpgradable" : "Not enough resources to upgrade all creatures. Do you want to upgrade following creatures?",
 	"vcmi.townWindow.upgradeAll.notUpgradable" : "Not enough resources to upgrade any creature.",
+
+	"vcmi.kingdomOverview.secSkillOverflow.hover" : "More skills",
+	"vcmi.kingdomOverview.secSkillOverflow.help" : "{More skills}\n\nThis hero has more skills.\nYou can see all of them in the hero overview.",
 
 	"vcmi.logicalExpressions.anyOf"  : "Any of the following:",
 	"vcmi.logicalExpressions.allOf"  : "All of the following:",
@@ -623,9 +641,11 @@
 	
 	"artifact.core.orbOfVulnerability.bonus.noResistance" : "{Orb of Vulnerability}\nNegates natural magic resistance of all creatures on the battlefield",
 	"creatures.core.angel.bonus.raisesMorale" : "{Increases allies morale}\nAngels and Archangels increase allies Morale by one",
-	"creatures.core.devil.bonus.descreaseLuck" : "{Reduces enemy luck}\nDevils and Archdevils reduce enemy luck by one",
+	"creatures.core.devil.bonus.decreaseLuck" : "{Reduces enemy luck}\nDevils and Archdevils reduce enemy luck by one",
 	"creatures.core.boneDragon.bonus.decreaseMorale" : "{Reduces enemy morale}\nBone Dragons and Ghost Dragons lower the morale of enemy units by one",
 	"creatures.core.marksman.bonus.extraAttack" : "{Shoots twice}\nThis unit can shoot twice",
+	"creatures.core.azureDragon.bonus.fearful" : "{Fear}\nEnemy units have a 10% chance of freezing in fear",
+	"creatures.core.azureDragon.bonus.fearless" : "{Fearless}\nImmune to Fear ability",
 
 	"core.bonus.ADDITIONAL_ATTACK.description" : "{Additional attacks}\nUnit can attack an additional {$val} times", // TODO: alternative descriptions for melee/ranged effect range
 	"core.bonus.ADDITIONAL_RETALIATION.description" : "{Additional retaliations}\nUnit can retaliate ${val} extra times",
@@ -646,8 +666,6 @@
 	"core.bonus.ENCHANTER.description" : "{Enchanter}\nCan cast ${subtype.spell} every turn",
 	"core.bonus.ENEMY_ATTACK_REDUCTION.description" : "{Ignore Attack (${val}%) }\nWhen being attacked, ${val}% of the attacker's attack is ignored",
 	"core.bonus.ENEMY_DEFENCE_REDUCTION.description" : "{Ignore Defense (${val}%) }\nWhen attacking, ${val}% of the defender's defense is ignored",
-	"core.bonus.FEAR.description" : "{Fear}\nEnemy units have a 10% chance of freezing in fear",
-	"core.bonus.FEARLESS.description" : "{Fearless}\nImmune to Fear ability",
 	"core.bonus.FEROCITY.description" : "{Ferocity}\nAttacks ${val} additional times if killed anybody",
 	"core.bonus.FIRE_SHIELD.description" : "{Fire Shield (${val}%) }\nThe unit reflects ${val} of the melee damage received",
 	"core.bonus.FIRST_STRIKE.description.bonusSubtype.damageTypeMelee" : "{First Strike}\nThe unit retaliates before being attacked in melee",
@@ -691,6 +709,7 @@
 	"core.bonus.REVENGE.description" : "{Revenge}\nDeals extra damage based on attacker's lost health in battle",
 	"core.bonus.SHOOTER.description" : "{Shoots}\nThis unit can use its ammo to perform ranged attacks",
 	"core.bonus.SHOOTS_ALL_ADJACENT.description" : "{Shoot all around}\nThis unit’s ranged attacks strike all targets in a small area",
+	"core.bonus.SKELETON_TRANSFORMER_TARGET.description" : "{Skeleton Transformation}\nThe Skeleton Transformer will turn this unit into a ${subtype.creature}",
 	"core.bonus.SOUL_STEAL.description" : "{Soul Steal}\nGains ${val} new creatures for each enemy killed",
 	"core.bonus.SPELL_AFTER_ATTACK.description" : "{Cast After Attack}\nHas a ${val}% chance to cast ${subtype.spell} after it attacks",
 	"core.bonus.SPELL_BEFORE_ATTACK.description" : "{Cast Before Attack}\nHas a ${val}% chance to cast ${subtype.spell} before it attacks",
@@ -709,7 +728,6 @@
 	"core.bonus.SPELL_SCHOOL_IMMUNITY.description.spellSchool.fire"  : "{Immune to Fire Magic}\nImmune to all spells from the school of Fire Magic",
 	"core.bonus.SPELL_SCHOOL_IMMUNITY.description.spellSchool.water" : "{Immune to Water Magic}\nImmune to all spells from the school of Water Magic",
 	"core.bonus.SUMMON_GUARDIANS.description" : "{Summon guardians}\nAt the start of battle summons ${subtype.creature} (${val}%)",
-	"core.bonus.SYNERGY_TARGET.description" : "{Synergizable}\nThis creature is vulnerable to synergy effect",
 	"core.bonus.THREE_HEADED_ATTACK.description" : "{Three-headed attack}\nAttacks three adjacent units",
 	"core.bonus.TRANSMUTATION.description" : "{Transmutation}\n${val}% chance to transform attacked unit to a different type",
 	"core.bonus.TWO_HEX_ATTACK_BREATH.description" : "{Breath Attack}\nAttacks by this unit will also hit any unit positioned immediately behind the target",
@@ -737,5 +755,16 @@
 	"spell.core.strongholdMoat.name" : "Wooden Spikes",
 	"spell.core.strongholdMoatTrigger.name" : "Wooden Spikes",
 	"spell.core.summonDemons.name" : "Summon Demons",
-	"spell.core.towerMoat.name" : "Land Mine"
+	"spell.core.towerMoat.name" : "Land Mine",
+
+	"spell.core.stoneGaze.description.none" : "{Stone Gaze}\n\nThe targeted unit is petrified and cannot move for three combat rounds. When attacked it takes 50% damage, and become unfrozen",
+	"spell.core.poison.description.none" : "{Poison}\n\nWhen poisoned, the target stack's maximum health is decreased by 10% for every combat round for three rounds. After three rounds, the creature is no longer poisoned, but the maximum health remains decreased",
+	"spell.core.bind.description.none" : "{Bind}\n\nTargeted unit is bound to the ground, unable to move until the stack that entangled them moves or perishes.",
+	"spell.core.disease.description.none" : "{Disease}\n\nThe living target becomes ill, thus having their attack and defense values reduced by two for a period of three rounds",
+	"spell.core.paralyze.description.none" : "{Paralyze}\n\nThe target is paralyzed and forgo their turn for the remainder of the current combat round and the two combat rounds thereafter, unless they are attacked meanwhile. Paralyzed creatures take full damage from attacks, but retaliate at only a quarter of their strength.",
+	"spell.core.age.description.none" : "{Age}\n\nAging lowers the maximum health of every creature in the target stack down to 50% for three combat rounds",
+	"spell.core.deathCloud.description.none" : "{Death Cloud}\n\nIn addition to normal ranged attack damage in target hex, the death cloud also affects all 6 adjacent hexes around the target hex dealing damage to all living creatures in the radius",
+	"spell.core.thunderbolt.description.none" : "{Thunderbolt}\n\nWhen the stack attacks, the there is a 20% chance that a lightning strike occurs before the enemy has a chance to retaliate. If if occurs, the lightning strike deals damage equal to ten times the number of attacking Thunderbirds",
+	"spell.core.dispelHelpful.description.none" : "{Dispel Helpful Spells}\n\nRemoves all spell effects from the targeted unit.",
+	"spell.core.acidBreath.description.none" : "{Acid breath}\n\nThe breath reduces the target stack's defense by 3, and has 20% chance to cause additional damage amount of 25 points per attacking unit.",
 }

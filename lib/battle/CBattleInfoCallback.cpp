@@ -683,6 +683,18 @@ bool CBattleInfoCallback::battleCanAttack(const battle::Unit * stack, const batt
 	if(!battleMatchOwner(stack, target))
 		return false;
 
+	if (stack->getPosition() != dest)
+	{
+		for (const auto & obstacle : battleGetAllObstacles())
+		{
+			if (obstacle->getStoppingTile().contains(dest))
+				return false;
+
+			if (stack->doubleWide() && obstacle->getStoppingTile().contains(stack->occupiedHex(dest)))
+				return false;
+		}
+	}
+
 	auto id = stack->unitType()->getId();
 	if (id == CreatureID::FIRST_AID_TENT || id == CreatureID::CATAPULT)
 		return false;
@@ -1889,7 +1901,7 @@ SpellID CBattleInfoCallback::getRandomCastedSpell(vstd::RNG & rand,const CStack 
 	if (!bl->size())
 		return SpellID::NONE;
 
-	if(bl->size() == 1)
+	if(bl->size() == 1 && bl->front()->additionalInfo[0] > 0) // there is one random spell -> select it
 		return bl->front()->subtype.as<SpellID>();
 
 	int totalWeight = 0;

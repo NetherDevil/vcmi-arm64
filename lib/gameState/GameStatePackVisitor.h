@@ -17,6 +17,7 @@ class CGameState;
 
 class GameStatePackVisitor final : public ICPackVisitor
 {
+	void restorePreBattleState(BattleID battleID);
 private:
 	CGameState & gs;
 
@@ -27,7 +28,9 @@ public:
 	}
 
 	void visitSetResources(SetResources & pack) override;
-	void visitSetPrimSkill(SetPrimSkill & pack) override;
+	void visitSetPrimarySkill(SetPrimarySkill & pack) override;
+	void visitSetHeroExperience(SetHeroExperience & pack) override;
+	void visitGiveStackExperience(GiveStackExperience & pack) override;
 	void visitSetSecSkill(SetSecSkill & pack) override;
 	void visitHeroVisitCastle(HeroVisitCastle & pack) override;
 	void visitSetMana(SetMana & pack) override;

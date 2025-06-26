@@ -24,7 +24,7 @@
 #include "battle/BattleEffectsController.h"
 #include "battle/BattleFieldController.h"
 #include "battle/BattleInterface.h"
-#include "battle/BattleInterfaceClasses.h"
+#include "battle/BattleResultWindow.h"
 #include "battle/BattleWindow.h"
 
 #include "eventsSDL/InputHandler.h"
@@ -462,18 +462,17 @@ void CPlayerInterface::openTownWindow(const CGTownInstance * town)
 	ENGINE->windows().pushWindow(newCastleInt);
 }
 
+void CPlayerInterface::heroExperienceChanged(const CGHeroInstance * hero, si64 val)
+{
+	EVENT_HANDLER_CALLED_BY_CLIENT;
+	for(auto ctw : ENGINE->windows().findWindows<IMarketHolder>())
+		ctw->updateExperience();
+}
+
 void CPlayerInterface::heroPrimarySkillChanged(const CGHeroInstance * hero, PrimarySkill which, si64 val)
 {
 	EVENT_HANDLER_CALLED_BY_CLIENT;
-	if (which == PrimarySkill::EXPERIENCE)
-	{
-		for(auto ctw : ENGINE->windows().findWindows<IMarketHolder>())
-			ctw->updateExperience();
-	}
-	else
-	{
-		adventureInt->onHeroChanged(hero);
-	}
+	adventureInt->onHeroChanged(hero);
 }
 
 void CPlayerInterface::heroSecondarySkillChanged(const CGHeroInstance * hero, int which, int val)
@@ -893,7 +892,7 @@ void CPlayerInterface::battleTriggerEffect(const BattleID & battleID, const Batt
 
 	battleInt->effectsController->battleTriggerEffect(bte);
 
-	if(bte.effect == vstd::to_underlying(BonusType::MANA_DRAIN))
+	if(bte.effect == BonusType::MANA_DRAIN)
 	{
 		const CGHeroInstance * manaDrainedHero = GAME->interface()->cb->getHero(ObjectInstanceID(bte.additionalInfo));
 		battleInt->windowObject->heroManaPointsChanged(manaDrainedHero);

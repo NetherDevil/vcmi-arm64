@@ -21,6 +21,7 @@
 #include "../../json/JsonBonus.h"
 #include "../../json/JsonUtils.h"
 #include "../../modding/IdentifierStorage.h"
+#include "../../CSkillHandler.h"
 #include "../../texts/CGeneralTextHandler.h"
 #include "../../texts/CLegacyConfigParser.h"
 
@@ -139,13 +140,22 @@ void CHeroHandler::loadHeroSkills(CHero * hero, const JsonNode & node) const
 	}
 }
 
-/// creates standard H3 hero specialty for creatures
-static std::vector<std::shared_ptr<Bonus>> createCreatureSpecialty(CreatureID cid)
+std::vector<std::shared_ptr<Bonus>> CHeroHandler::createCreatureSpecialty(CreatureID cid, int fixedLevel, int growthPerStep) const
 {
 	std::vector<std::shared_ptr<Bonus>> result;
-
 	const auto & specCreature = *cid.toCreature();
-	int stepSize = specCreature.getLevel() ? specCreature.getLevel() : 5;
+
+	if (fixedLevel == 0)
+		fixedLevel = specCreature.getLevel();
+
+	if (fixedLevel == 0)
+	{
+		fixedLevel = 5;
+		logMod->warn("Creature '%s' of level 0 has hero with generic specialty! Please specify level explicitly or give creature non-zero level", specCreature.getJsonKey());
+	}
+
+	if (growthPerStep == 0)
+		growthPerStep = LIBRARY->engineSettings()->getInteger(EGameSettings::HEROES_SPECIALTY_CREATURE_GROWTH);
 
 	{
 		auto bonus = std::make_shared<Bonus>();
@@ -155,24 +165,37 @@ static std::vector<std::shared_ptr<Bonus>> createCreatureSpecialty(CreatureID ci
 		result.push_back(bonus);
 	}
 
+	for (const auto & skill : { PrimarySkill::ATTACK, PrimarySkill::DEFENSE})
 	{
 		auto bonus = std::make_shared<Bonus>();
 		bonus->type = BonusType::PRIMARY_SKILL;
-		bonus->subtype = BonusSubtypeID(PrimarySkill::ATTACK);
-		bonus->val = 0;
+		bonus->subtype = BonusSubtypeID(skill);
+		bonus->val = growthPerStep;
+		bonus->valType = BonusValueType::PERCENT_TO_TARGET_TYPE;
+		bonus->targetSourceType = BonusSource::CREATURE_ABILITY;
 		bonus->limiter.reset(new CCreatureTypeLimiter(specCreature, true));
-		bonus->updater.reset(new GrowsWithLevelUpdater(specCreature.getAttack(false), stepSize));
+		bonus->updater.reset(new TimesHeroLevelUpdater(fixedLevel));
 		result.push_back(bonus);
 	}
+	return result;
+}
 
+std::vector<std::shared_ptr<Bonus>> CHeroHandler::createSecondarySkillSpecialty(SecondarySkill skillID, int growthPerStep) const
+{
+	std::vector<std::shared_ptr<Bonus>> result;
+	const auto & skillPtr = LIBRARY->skillh->objects[skillID.getNum()];
+
+	if (skillPtr->specialtyTargetBonuses.empty())
+		logMod->warn("Skill '%s' does not supports generic specialties!", skillPtr->getJsonKey());
+
+	if (growthPerStep == 0)
+		growthPerStep = LIBRARY->engineSettings()->getInteger(EGameSettings::HEROES_SPECIALTY_SECONDARY_SKILL_GROWTH);
+
+	for (const auto & bonus : skillPtr->specialtyTargetBonuses)
 	{
-		auto bonus = std::make_shared<Bonus>();
-		bonus->type = BonusType::PRIMARY_SKILL;
-		bonus->subtype = BonusSubtypeID(PrimarySkill::DEFENSE);
-		bonus->val = 0;
-		bonus->limiter.reset(new CCreatureTypeLimiter(specCreature, true));
-		bonus->updater.reset(new GrowsWithLevelUpdater(specCreature.getDefense(false), stepSize));
-		result.push_back(bonus);
+		auto bonusCopy = std::make_shared<Bonus>(*bonus);
+		bonusCopy->val = growthPerStep;
+		result.push_back(bonusCopy);
 	}
 
 	return result;
@@ -201,15 +224,7 @@ void CHeroHandler::beforeValidate(JsonNode & object)
 	}
 }
 
-void CHeroHandler::afterLoadFinalization()
-{
-	for(const auto & functor : callAfterLoadFinalization)
-		functor();
-
-	callAfterLoadFinalization.clear();
-}
-
-void CHeroHandler::loadHeroSpecialty(CHero * hero, const JsonNode & node)
+void CHeroHandler::loadHeroSpecialty(CHero * hero, const JsonNode & node) const
 {
 	auto prepSpec = [=](std::shared_ptr<Bonus> bonus)
 	{
@@ -230,18 +245,28 @@ void CHeroHandler::loadHeroSpecialty(CHero * hero, const JsonNode & node)
 	//creature specialty - alias for simplicity
 	if(!specialtyNode["creature"].isNull())
 	{
-		JsonNode creatureNode = specialtyNode["creature"];
+		const JsonNode & creatureNode = specialtyNode["creature"];
+		int targetLevel = specialtyNode["creatureLevel"].Integer();
+		int stepSize = specialtyNode["stepSize"].Integer();
 
-		std::function<void()> specialtyLoader = [creatureNode, hero, prepSpec]
+		LIBRARY->identifiers()->requestIdentifier("creature", creatureNode, [this, hero, prepSpec, targetLevel, stepSize](si32 creature)
 		{
-			LIBRARY->identifiers()->requestIdentifier("creature", creatureNode, [hero, prepSpec](si32 creature)
-			{
-				for (const auto & bonus : createCreatureSpecialty(CreatureID(creature)))
-					hero->specialty.push_back(prepSpec(bonus));
-			});
-		};
+			for (const auto & bonus : createCreatureSpecialty(CreatureID(creature), targetLevel, stepSize))
+				hero->specialty.push_back(prepSpec(bonus));
+		});
+	}
 
-		callAfterLoadFinalization.push_back(specialtyLoader);
+	//secondary skill specialty - alias for simplicity
+	if(!specialtyNode["secondary"].isNull())
+	{
+		const JsonNode & skillNode = specialtyNode["secondary"];
+		int stepSize = specialtyNode["stepSize"].Integer();
+
+		LIBRARY->identifiers()->requestIdentifier("secondarySkill", skillNode, [this, hero, prepSpec, stepSize](si32 creature)
+		{
+			for (const auto & bonus : createSecondarySkillSpecialty(SecondarySkill(creature), stepSize))
+				hero->specialty.push_back(prepSpec(bonus));
+		});
 	}
 
 	for(const auto & keyValue : specialtyNode["bonuses"].Struct())
