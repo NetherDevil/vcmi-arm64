@@ -859,6 +859,11 @@ int64_t CGHeroInstance::getEffectValue(const spells::Spell * spell) const
 	return 0;
 }
 
+int64_t CGHeroInstance::getEffectRange(const spells::Spell * spell) const
+{
+	return 0;
+}
+
 PlayerColor CGHeroInstance::getCasterOwner() const
 {
 	return tempOwner;
@@ -1355,10 +1360,7 @@ CBonusSystemNode & CGHeroInstance::whereShouldBeAttached(CGameState & gs)
 	if(visitedTown.hasValue())
 	{
 		auto town = gs.getTown(visitedTown);
-		if(isGarrisoned())
-			return *town;
-		else
-			return town->townAndVis;
+		return town->townAndVis;
 	}
 	else
 		return CArmedInstance::whereShouldBeAttached(gs);

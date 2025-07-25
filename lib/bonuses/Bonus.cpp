@@ -16,7 +16,6 @@
 
 #include "../CBonusTypeHandler.h"
 #include "../CCreatureHandler.h"
-#include "../CCreatureSet.h"
 #include "../CSkillHandler.h"
 #include "../TerrainHandler.h"
 #include "../GameLibrary.h"
@@ -204,6 +203,8 @@ JsonNode Bonus::toJsonNode() const
 		root["updater"] = updater->toJsonNode();
 	if(propagator)
 		root["propagator"].String() = vstd::findKey(bonusPropagatorMap, propagator);
+	if(hidden)
+		root["hidden"].Bool() = hidden;
 	return root;
 }
 

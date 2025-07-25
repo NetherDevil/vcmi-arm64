@@ -132,11 +132,13 @@ void CCommanderSkillIcon::clickPressed(const Point & cursorPosition)
 {
 	callback();
 	isSelected = true;
+	redraw();
 }
 
 void CCommanderSkillIcon::deselect()
 {
 	isSelected = false;
+	redraw();
 }
 
 bool CCommanderSkillIcon::getIsMasterAbility()
@@ -936,7 +938,7 @@ void CStackWindow::initBonusesList()
 		bonusInfo.bonusSource = b->source;
 
 		//if it's possible to give any description or image for this kind of bonus
-		if(!bonusInfo.description.empty())
+		if(!bonusInfo.description.empty() && !b->hidden)
 			activeBonuses.push_back(bonusInfo);
 	}
 }
